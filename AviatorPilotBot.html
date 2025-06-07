@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>AviatorPilotBot IA</title>
+  <style>
+    body { background-color: #111; color: #fff; font-family: Arial; text-align: center; padding: 20px; }
+    h1 { color: #ff3860; }
+    .section {
+      max-width: 600px; margin: 20px auto;
+      background: #1d1d1d; padding: 20px;
+      border-radius: 8px;
+    }
+    .btn {
+      padding: 10px 20px; margin: 10px 5px;
+      font-size: 16px; background-color: #333;
+      color: #fff; border: none; border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn:hover { background-color: #555; }
+    .entry {
+      background: #222; padding: 10px; margin: 10px 0;
+      border-radius: 6px; font-size: 14px;
+    }
+    input[type="number"] {
+      width: 100px; padding: 5px;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>✈️ AviatorPilotBot IA</h1>
+
+  <div class="section">
+    <button class="btn" onclick="newPrediction()">🔮 Nouvelle Prédiction IA</button>
+    <button class="btn" onclick="momentFavorable()">🧠 Moment favorable</button>
+    <button class="btn" onclick="generateIATip()">📊 Conseil IA du jour</button>
+    <button class="btn" onclick="exportCSV()">📁 Export CSV</button>
+  </div>
+
+  <div class="section" id="prediction-output">Aucune prédiction pour le moment.</div>
+
+  <div class="section" id="history">
+    <h2>📋 Historique</h2>
+    <div id="history-entries"></div>
+  </div>
+
+  <div class="section" id="ia-tips">
+    <h2>🧠 Conseil IA du jour</h2>
+    <div id="ia-tip-output">Clique pour générer un conseil IA basé sur l’historique.</div>
+  </div>
+
+  <script>
+    let history = [];
+
+    function formatDate(d) {
+      return d.toLocaleString('fr-FR');
+    }
+
+    function newPrediction() {
+      const now = new Date();
+      const hour = now.getHours();
+      let prediction, confidence, reason;
+
+      if (hour >= 20 && hour <= 23) {
+        prediction = (2.2 + Math.random() * 0.4).toFixed(2);
+        confidence = "Élevée";
+        reason = "Historique favorable en soirée";
+      } else if (hour >= 14 && hour <= 17) {
+        prediction = (1.6 + Math.random() * 0.5).toFixed(2);
+        confidence = "Moyenne";
+        reason = "Période intermédiaire, volatilité modérée";
+      } else {
+        prediction = (1.3 + Math.random() * 0.5).toFixed(2);
+        confidence = "Faible";
+        reason = "Plage horaire peu fiable";
+      }
+
+      const entry = {
+        date: formatDate(now),
+        prediction,
+        result: null,
+        confidence,
+        reason
+      };
+      history.unshift(entry);
+      updateDisplay(entry);
+    }
+
+    function updateDisplay(entry) {
+      document.getElementById("prediction-output").innerHTML = `
+        🎯 Prédiction IA : x${entry.prediction} <br>
+        🕒 ${entry.date} <br>
+        🔎 Confiance : ${entry.confidence}<br>
+        💬 Justification : ${entry.reason}
+      `;
+
+      const container = document.createElement("div");
+      container.className = "entry";
+      container.innerHTML = `
+        <strong>Prédiction : x${entry.prediction}</strong><br>
+        🕒 ${entry.date}<br>
+        🔎 Confiance : ${entry.confidence}<br>
+        💬 ${entry.reason}<br>
+        Résultat réel : <input type="number" step="0.01" placeholder="ex: 2.40" onchange="saveResult(this, ${history.indexOf(entry)})">
+      `;
+      document.getElementById("history-entries").prepend(container);
+    }
+
+    function saveResult(input, index) {
+      const val = parseFloat(input.value);
+      if (!isNaN(val)) {
+        history[index].result = val;
+        input.outerHTML = `<strong>✅ Résultat : x${val.toFixed(2)}</strong>`;
+      }
+    }
+
+    function momentFavorable() {
+      const delayMin = Math.floor(Math.random() * 11) + 5;
+      const future = new Date();
+      future.setMinutes(future.getMinutes() + delayMin);
+      const prediction = (2.1 + Math.random() * 0.5).toFixed(2);
+      const entry = {
+        date: formatDate(future),
+        prediction,
+        result: null,
+        confidence: "Très élevée",
+        reason: `Moment favorable identifié (dans ${delayMin} minutes)`
+      };
+      history.unshift(entry);
+      updateDisplay(entry);
+    }
+
+    function generateIATip() {
+      const evening = history.filter(h => {
+        const hour = new Date(h.date).getHours();
+        return h.result && hour >= 20 && hour <= 23 && Math.abs(h.prediction - h.result) <= 0.3;
+      });
+
+      const msg = evening.length >= 5
+        ? `🎯 Vise x2.20 à x2.50 entre 20h–23h (basé sur ${evening.length} cas favorables)`
+        : `⚠️ Pas assez de données encore. Continue d'enregistrer les résultats !`;
+
+      document.getElementById("ia-tip-output").innerText = msg;
+    }
+
+    function exportCSV() {
+      const header = "Date,Prédiction,Résultat,Confiance,Justification\n";
+      const rows = history.map(h =>
+        `"${h.date}",x${h.prediction},${h.result ? 'x' + h.result : ''},${h.confidence},"${h.reason}"`
+      );
+      const blob = new Blob([header + rows.join("\n")], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "aviatorbot_predictions.csv";
+      a.click();
+    }
+  </script>
+</body>
+</html>
